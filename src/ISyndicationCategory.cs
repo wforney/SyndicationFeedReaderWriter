@@ -2,14 +2,28 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Microsoft.SyndicationFeed
+namespace Microsoft.SyndicationFeed;
+
+/// <summary>
+/// Represents a category in a syndication feed.
+/// </summary>
+public interface ISyndicationCategory
 {
-    public interface ISyndicationCategory
-    {
-        string Name { get; }
+    /// <summary>
+    /// Gets the label.
+    /// </summary>
+    /// <value>The label.</value>
+    string? Label { get; }
 
-        string Label { get; }
+    /// <summary>
+    /// Gets the name.
+    /// </summary>
+    /// <value>The name.</value>
+    string Name { get; }
 
-        string Scheme { get; }
-    }
+    /// <summary>
+    /// Gets the scheme.
+    /// </summary>
+    /// <value>The scheme.</value>
+    string? Scheme { get; }
 }

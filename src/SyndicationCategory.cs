@@ -2,21 +2,16 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
+namespace Microsoft.SyndicationFeed;
 
-namespace Microsoft.SyndicationFeed
+public sealed class SyndicationCategory(string name) : ISyndicationCategory
 {
-    public sealed class SyndicationCategory : ISyndicationCategory
-    {
-        public SyndicationCategory(string name)
-        {
-            Name = name ?? throw new ArgumentNullException(nameof(name));
-        }
+    /// <inheritdoc/>
+    public string? Label { get; set; }
 
-        public string Name { get; private set; }
+    /// <inheritdoc/>
+    public string Name { get; private set; } = name ?? throw new ArgumentNullException(nameof(name));
 
-        public string Label { get; set; }
-
-        public string Scheme { get; set; }
-    }
+    /// <inheritdoc/>
+    public string? Scheme { get; set; }
 }

@@ -2,120 +2,107 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
+namespace Microsoft.SyndicationFeed;
 
-namespace Microsoft.SyndicationFeed
+/// <summary>
+/// Represents a syndication item, which is a single entry in a syndication feed. Implements the
+/// <see cref="ISyndicationItem"/>
+/// </summary>
+/// <seealso cref="ISyndicationItem"/>
+public class SyndicationItem : ISyndicationItem
 {
-    public class SyndicationItem : ISyndicationItem
+    private ICollection<ISyndicationCategory> _categories = [];
+    private ICollection<ISyndicationPerson> _contributors = [];
+    private ICollection<ISyndicationLink> _links = [];
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SyndicationItem"/> class.
+    /// </summary>
+    public SyndicationItem()
     {
-        private ICollection<ISyndicationCategory> _categories;
-        private ICollection<ISyndicationPerson> _contributors;
-        private ICollection<ISyndicationLink> _links;
+    }
 
-        public SyndicationItem()
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SyndicationItem"/> class.
+    /// </summary>
+    /// <param name="item">The item.</param>
+    /// <exception cref="ArgumentNullException">item</exception>
+    public SyndicationItem(ISyndicationItem item)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+
+        Id = item.Id;
+        Title = item.Title;
+        Description = item.Description;
+        LastUpdated = item.LastUpdated;
+        Published = item.Published;
+
+        // Copy collections only if needed
+        _categories = item.Categories as ICollection<ISyndicationCategory> ?? [.. item.Categories];
+        _contributors = item.Contributors as ICollection<ISyndicationPerson> ?? [.. item.Contributors];
+        _links = item.Links as ICollection<ISyndicationLink> ?? [.. item.Links];
+    }
+
+    /// <inheritdoc/>
+    public IEnumerable<ISyndicationCategory> Categories => _categories;
+
+    /// <inheritdoc/>
+    public IEnumerable<ISyndicationPerson> Contributors => _contributors;
+
+    /// <inheritdoc/>
+    public string? Description { get; set; }
+
+    /// <inheritdoc/>
+    public string? Id { get; set; }
+
+    /// <inheritdoc/>
+    public DateTimeOffset LastUpdated { get; set; }
+
+    /// <inheritdoc/>
+    public IEnumerable<ISyndicationLink> Links => _links;
+
+    /// <inheritdoc/>
+    public DateTimeOffset Published { get; set; }
+
+    /// <inheritdoc/>
+    public string? Title { get; set; }
+
+    /// <inheritdoc/>
+    public void AddCategory(ISyndicationCategory category)
+    {
+        ArgumentNullException.ThrowIfNull(category);
+
+        if (_categories.IsReadOnly)
         {
-            _categories = new List<ISyndicationCategory>();
-            _contributors = new List<ISyndicationPerson>();
-            _links = new List<ISyndicationLink>();
+            _categories = [.. _categories];
         }
 
-        public SyndicationItem(ISyndicationItem item)
+        _categories.Add(category);
+    }
+
+    /// <inheritdoc/>
+    public void AddContributor(ISyndicationPerson person)
+    {
+        ArgumentNullException.ThrowIfNull(person);
+
+        if (_contributors.IsReadOnly)
         {
-            if (item == null)
-            {
-                throw new ArgumentNullException(nameof(item));
-            }
-
-            Id = item.Id;
-            Title = item.Title;
-            Description = item.Description;
-            LastUpdated = item.LastUpdated;
-            Published = item.Published;
-
-            // Copy collections only if needed
-            _categories = item.Categories as ICollection<ISyndicationCategory> ?? item.Categories.ToList();
-            _contributors = item.Contributors as ICollection<ISyndicationPerson> ?? item.Contributors.ToList();
-            _links = item.Links as ICollection<ISyndicationLink> ?? item.Links.ToList();
+            _contributors = [.. _contributors];
         }
 
-        public string Id { get; set; }
+        _contributors.Add(person);
+    }
 
-        public string Title { get; set; }
+    /// <inheritdoc/>
+    public void AddLink(ISyndicationLink link)
+    {
+        ArgumentNullException.ThrowIfNull(link);
 
-        public string Description { get; set; }
-
-        public IEnumerable<ISyndicationCategory> Categories 
+        if (_links.IsReadOnly)
         {
-            get 
-            {
-                return _categories;
-            }
+            _links = [.. _links];
         }
 
-        public IEnumerable<ISyndicationPerson> Contributors 
-        {
-            get
-            {
-                return _contributors;
-            }
-        }
-
-        public IEnumerable<ISyndicationLink> Links 
-        {
-            get {
-                return _links;
-            }
-        }
-
-        public DateTimeOffset LastUpdated { get; set; }
-
-        public DateTimeOffset Published { get; set; }
-
-        public void AddCategory(ISyndicationCategory category)
-        {
-            if (category == null)
-            {
-                throw new ArgumentNullException(nameof(category));
-            }
-
-            if (_categories.IsReadOnly)
-            {
-                _categories = _categories.ToList();
-            }
-
-            _categories.Add(category);
-        }
-
-        public void AddContributor(ISyndicationPerson person)
-        {
-            if (person == null)
-            {
-                throw new ArgumentNullException(nameof(person));
-            }
-
-            if (_contributors.IsReadOnly)
-            {
-                _contributors = _contributors.ToList();
-            }
-
-            _contributors.Add(person);
-        }
-
-        public void AddLink(ISyndicationLink link)
-        {
-            if (link == null)
-            {
-                throw new ArgumentNullException(nameof(link));
-            }
-
-            if (_links.IsReadOnly)
-            {
-                _links = _links.ToList();
-            }
-
-            _links.Add(link);
-        }
+        _links.Add(link);
     }
 }

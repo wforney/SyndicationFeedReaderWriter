@@ -1,17 +1,29 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <Import Project="..\build\sign.props" />
-  
-  <PropertyGroup>
-    <VersionPrefix>1.0.0</VersionPrefix>
-    <TargetFramework>netstandard1.3</TargetFramework>
-    <DisableImplicitFrameworkReferences>true</DisableImplicitFrameworkReferences>
-    <PackagingToolsInsufficientSDKVersion>false</PackagingToolsInsufficientSDKVersion>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="MicroBuild.Core" Version="$(MicroBuildVersion)" />
-    <PackageReference Include="System.Globalization" Version="4.3.0" />
-    <PackageReference Include="System.Linq" Version="4.3.0" />
-    <PackageReference Include="System.Runtime.Extensions" Version="4.3.0" />
-    <PackageReference Include="System.Xml.ReaderWriter" Version="4.3.0" />
-  </ItemGroup>
+	<Import Project="..\build\sign.props" />
+	<PropertyGroup>
+		<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<IncludeSymbols>True</IncludeSymbols>
+		<Nullable>enable</Nullable>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<RootNamespace>Microsoft.SyndicationFeed</RootNamespace>
+		<SymbolPackageFormat>snupkg</SymbolPackageFormat>
+		<TargetFramework>net9.0</TargetFramework>
+		<VersionPrefix>1.0.0</VersionPrefix>
+	</PropertyGroup>
+	<ItemGroup>
+		<None Include="..\LICENSE">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+		<None Include="..\README.md">
+			<Pack>True</Pack>
+			<PackagePath>\</PackagePath>
+		</None>
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="MicroBuild.Core" />
+	</ItemGroup>
 </Project>
