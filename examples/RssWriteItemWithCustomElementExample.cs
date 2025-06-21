@@ -7,32 +7,32 @@ using Microsoft.SyndicationFeed.Rss;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using System.Xml;
-
 
 /// <summary>
 /// Create a SyndicationItem and add a custom field.
 /// </summary>
-class RssWriteItemWithCustomElement
+internal class RssWriteItemWithCustomElement
 {
     public static async Task WriteCustomItem()
     {
         const string ExampleNs = "http://contoso.com/syndication/feed/examples";
-        var sw = new StringWriterWithEncoding(Encoding.UTF8);
+        StringWriterWithEncoding sw = new(Encoding.UTF8);
 
         using (XmlWriter xmlWriter = XmlWriter.Create(sw, new XmlWriterSettings() { Async = true, Indent = true }))
         {
-            var attributes = new List<SyndicationAttribute>()
-            {
-                new SyndicationAttribute("xmlns:example", ExampleNs)
-            };
+            List<SyndicationAttribute> attributes =
+                [
+                    new SyndicationAttribute("xmlns:example", ExampleNs)
+                ];
 
-            var formatter = new RssFormatter(attributes, xmlWriter.Settings);
-            var writer = new RssFeedWriter(xmlWriter, attributes, formatter);
-              
+            RssFormatter formatter = new(attributes, xmlWriter.Settings);
+            RssFeedWriter writer = new(xmlWriter, attributes, formatter);
+
             // Create item
-            var item = new SyndicationItem()
+            SyndicationItem item = new()
             {
                 Title = "Rss Writer Available",
                 Description = "The new RSS Writer is now available as a NuGet package!",
@@ -45,12 +45,12 @@ class RssWriteItemWithCustomElement
 
             //
             // Format the item as SyndicationContent
-            var content = new SyndicationContent(formatter.CreateContent(item));
+            SyndicationContent content = new(formatter.CreateContent(item));
 
             // Add custom fields/attributes
             content.AddField(new SyndicationContent("customElement", ExampleNs, "Custom Value"));
 
-            // Write 
+            // Write
             await writer.Write(content);
 
             // Done
@@ -59,18 +59,9 @@ class RssWriteItemWithCustomElement
 
         Console.WriteLine(sw.ToString());
     }
-    
-    class StringWriterWithEncoding : StringWriter
+
+    private class StringWriterWithEncoding(Encoding encoding) : StringWriter
     {
-        private readonly Encoding _encoding;
-
-        public StringWriterWithEncoding(Encoding encoding)
-        {
-            this._encoding = encoding;
-        }
-
-        public override Encoding Encoding {
-            get { return _encoding; }
-        }
+        public override Encoding Encoding => encoding;
     }
 }
