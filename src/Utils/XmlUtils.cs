@@ -24,7 +24,7 @@ internal static class XmlUtils
             });
     }
 
-    public static XmlWriter CreateXmlWriter(XmlWriterSettings settings, IEnumerable<ISyndicationAttribute> attributes, StringBuilder buffer)
+    public static XmlWriter CreateXmlWriter(XmlWriterSettings settings, IEnumerable<ISyndicationAttribute>? attributes, StringBuilder buffer)
     {
         settings.Async = false;
         settings.OmitXmlDeclaration = true;
