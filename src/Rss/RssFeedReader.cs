@@ -3,90 +3,71 @@
 // See the LICENSE file in the project root for more information.
 
 using Microsoft.SyndicationFeed.Utils;
-using System.Threading.Tasks;
 using System.Xml;
 
-namespace Microsoft.SyndicationFeed.Rss
+namespace Microsoft.SyndicationFeed.Rss;
+
+/// <summary>
+/// Represents a reader for RSS feeds, specifically RSS 2.0. Implements the <see cref="XmlFeedReader"/>
+/// </summary>
+/// <seealso cref="XmlFeedReader"/>
+/// <remarks>Initializes a new instance of the <see cref="RssFeedReader"/> class.</remarks>
+/// <param name="reader">The reader.</param>
+/// <param name="parser">The parser.</param>
+/// <seealso cref="ISyndicationFeedReader"/>
+public class RssFeedReader(XmlReader reader, ISyndicationFeedParser? parser = null) : XmlFeedReader(reader, parser ?? new RssParser())
 {
-    public class RssFeedReader : XmlFeedReader
+    private bool _knownFeed;
+
+    /// <inheritdoc/>
+    public override async Task<bool> Read()
     {
-        private readonly XmlReader _reader;
-        private bool _knownFeed;
-
-        public RssFeedReader(XmlReader reader) 
-            : this(reader, new RssParser())
+        if (!_knownFeed)
         {
+            await InitRead();
+            _knownFeed = true;
         }
 
-        public RssFeedReader(XmlReader reader, ISyndicationFeedParser parser)
-            : base(reader, parser)
+        return await base.Read();
+    }
+
+    /// <inheritdoc/>
+    protected override SyndicationElementType MapElementType(string elementName)
+    {
+        return Reader.NamespaceURI != RssConstants.Rss20Namespace
+            ? SyndicationElementType.Content
+            : elementName switch
+            {
+                RssElementNames.Item => SyndicationElementType.Item,
+                RssElementNames.Link => SyndicationElementType.Link,
+                RssElementNames.Category => SyndicationElementType.Category,
+                RssElementNames.Author or RssElementNames.ManagingEditor => SyndicationElementType.Person,
+                RssElementNames.Image => SyndicationElementType.Image,
+                _ => SyndicationElementType.Content,
+            };
+    }
+
+    private async Task InitRead()
+    {
+        // Check <rss>
+        bool knownFeed = Reader.IsStartElement(RssElementNames.Rss, RssConstants.Rss20Namespace) &&
+                         Reader.GetAttribute(RssElementNames.Version)?.Equals(RssConstants.Version) == true;
+
+        if (knownFeed)
         {
-            _reader = reader;
+            // Read<rss>
+            _ = await XmlUtils.ReadAsync(Reader);
+
+            // Check <channel>
+            knownFeed = Reader.IsStartElement(RssElementNames.Channel, RssConstants.Rss20Namespace);
         }
 
-        public override async Task<bool> Read()
+        if (!knownFeed)
         {
-            if (!_knownFeed)
-            {
-                await InitRead();
-                _knownFeed = true;
-            }
-
-            return await base.Read();
+            throw new XmlException("Unknown Rss Feed");
         }
-        
-        protected override SyndicationElementType MapElementType(string elementName)
-        {
-            if (_reader.NamespaceURI != RssConstants.Rss20Namespace)
-            {
-                return SyndicationElementType.Content;
-            }
 
-            switch (elementName)
-            {
-                case RssElementNames.Item:
-                    return SyndicationElementType.Item;
-
-                case RssElementNames.Link:
-                    return SyndicationElementType.Link;
-
-                case RssElementNames.Category:
-                    return SyndicationElementType.Category;
-
-                case RssElementNames.Author:
-                case RssElementNames.ManagingEditor:
-                    return SyndicationElementType.Person;
-
-                case RssElementNames.Image:
-                    return SyndicationElementType.Image;
-
-                default:
-                    return SyndicationElementType.Content;
-            }
-        }
-        
-        private async Task InitRead()
-        {
-            // Check <rss>
-            bool knownFeed = _reader.IsStartElement(RssElementNames.Rss, RssConstants.Rss20Namespace) &&
-                             _reader.GetAttribute(RssElementNames.Version).Equals(RssConstants.Version);
-
-            if (knownFeed)
-            {
-                // Read<rss>
-                await XmlUtils.ReadAsync(_reader);
-
-                // Check <channel>
-                knownFeed = _reader.IsStartElement(RssElementNames.Channel, RssConstants.Rss20Namespace);
-            }
-
-            if (!knownFeed)
-            {
-                throw new XmlException("Unknown Rss Feed");
-            }
-
-            // Read <channel>
-            await XmlUtils.ReadAsync(_reader);
-        }
+        // Read <channel>
+        _ = await XmlUtils.ReadAsync(Reader);
     }
 }
