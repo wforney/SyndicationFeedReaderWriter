@@ -13,13 +13,17 @@ namespace Microsoft.SyndicationFeed;
 /// <seealso cref="ISyndicationFeedWriter"/>
 public abstract class XmlFeedWriter(XmlWriter writer, ISyndicationFeedFormatter formatter) : ISyndicationFeedWriter
 {
-    private readonly XmlWriter _writer = writer ?? throw new ArgumentNullException(nameof(writer));
-
     /// <inheritdoc/>
     public ISyndicationFeedFormatter Formatter { get; private set; } = formatter ?? throw new ArgumentNullException(nameof(formatter));
 
+    /// <summary>
+    /// Gets the writer.
+    /// </summary>
+    /// <value>The writer.</value>
+    protected XmlWriter Writer { get; } = writer ?? throw new ArgumentNullException(nameof(writer));
+
     /// <inheritdoc/>
-    public Task Flush() => XmlUtils.FlushAsync(_writer);
+    public Task Flush() => XmlUtils.FlushAsync(Writer);
 
     /// <inheritdoc/>
     public virtual Task Write(ISyndicationContent content) => WriteRaw(Formatter.Format(content ?? throw new ArgumentNullException(nameof(content))));
@@ -40,14 +44,14 @@ public abstract class XmlFeedWriter(XmlWriter writer, ISyndicationFeedFormatter 
     public virtual Task Write(ISyndicationLink link) => WriteRaw(Formatter.Format(link ?? throw new ArgumentNullException(nameof(link))));
 
     /// <inheritdoc/>
-    public virtual Task WriteRaw(string content) => XmlUtils.WriteRawAsync(_writer, content);
+    public virtual Task WriteRaw(string content) => XmlUtils.WriteRawAsync(Writer, content);
 
     /// <inheritdoc/>
     public virtual Task WriteValue<T>(string name, T value)
     {
         ArgumentException.ThrowIfNullOrEmpty(name);
 
-        string valueString = Formatter.FormatValue(value);
+        string? valueString = Formatter.FormatValue(value);
 
         return valueString is null
             ? throw new FormatException(nameof(value))

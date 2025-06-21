@@ -1,27 +1,30 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.using System;
+// See the LICENSE file in the project root for more information.
 
-using System;
+namespace Microsoft.SyndicationFeed;
 
-namespace Microsoft.SyndicationFeed
+/// <summary>
+/// Represents a syndication image, which is an image associated with a syndication feed or entry.
+/// This class cannot be inherited. Implements the <see cref="ISyndicationImage"/>
+/// </summary>
+/// <param name="url">The URL.</param>
+/// <param name="relationshipType">Type of the relationship.</param>
+/// <seealso cref="ISyndicationImage"/>
+public sealed class SyndicationImage(Uri url, string? relationshipType = null) : ISyndicationImage
 {
-    public sealed class SyndicationImage : ISyndicationImage
-    {
-        public SyndicationImage(Uri url, string relationshipType = null)
-        {
-            Url = url ?? throw new ArgumentNullException(nameof(url));
-            RelationshipType = relationshipType;
-        }
+    /// <inheritdoc/>
+    public string? Description { get; set; }
 
-        public string Title { get; set; }
+    /// <inheritdoc/>
+    public ISyndicationLink? Link { get; set; }
 
-        public Uri Url { get; private set; }
+    /// <inheritdoc/>
+    public string? RelationshipType { get; set; } = relationshipType;
 
-        public ISyndicationLink Link { get; set; }
+    /// <inheritdoc/>
+    public string? Title { get; set; }
 
-        public string RelationshipType { get; set; }
-
-        public string Description { get; set; }
-    }
+    /// <inheritdoc/>
+    public Uri Url { get; private set; } = url ?? throw new ArgumentNullException(nameof(url));
 }

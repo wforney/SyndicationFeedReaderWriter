@@ -1,21 +1,36 @@
 ﻿// Licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licenses this file to you under the MIT license.
-// See the LICENSE file in the project root for more information.using System;
+// See the LICENSE file in the project root for more information.
 
-using System;
+namespace Microsoft.SyndicationFeed;
 
-namespace Microsoft.SyndicationFeed
+/// <summary>
+/// Represents an image associated with a syndication feed.
+/// </summary>
+public interface ISyndicationImage
 {
-    public interface ISyndicationImage
-    {
-        string Title { get; }
+    /// <summary>
+    /// Gets the description of the image.
+    /// </summary>
+    string? Description { get; }
 
-        Uri Url { get;  }
+    /// <summary>
+    /// Gets the link associated with the image.
+    /// </summary>
+    ISyndicationLink? Link { get; }
 
-        ISyndicationLink Link { get; }
+    /// <summary>
+    /// Gets the relationship type of the image.
+    /// </summary>
+    string? RelationshipType { get; }
 
-        string RelationshipType { get; }
+    /// <summary>
+    /// Gets the title of the image.
+    /// </summary>
+    string? Title { get; }
 
-        string Description { get; }
-    }
+    /// <summary>
+    /// Gets the URL of the image.
+    /// </summary>
+    Uri Url { get; }
 }
