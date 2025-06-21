@@ -43,12 +43,14 @@ namespace Microsoft.SyndicationFeed
 
         private static bool TryParseDateRssSpec(string value, out DateTimeOffset result)
         {
+            result = default;
+
             if (string.IsNullOrEmpty(value))
             {
                 return false;
             }
 
-            StringBuilder sb = new StringBuilder(value.Trim());
+            StringBuilder sb = new(value.Trim());
 
             if (sb.Length < 18)
             {
@@ -79,11 +81,10 @@ namespace Microsoft.SyndicationFeed
             bool thereAreSeconds = (sb[17] == ':');
             int timeZoneStartIndex = thereAreSeconds ? 21 : 18;
 
-            string timeZoneSuffix = sb.ToString().Substring(timeZoneStartIndex);
+            string timeZoneSuffix = sb.ToString()[timeZoneStartIndex..];
             sb.Remove(timeZoneStartIndex, sb.Length - timeZoneStartIndex);
 
-            bool isUtc;
-            sb.Append(NormalizeTimeZone(timeZoneSuffix, out isUtc));
+            sb.Append(NormalizeTimeZone(timeZoneSuffix, out bool isUtc));
 
             string wellFormattedString = sb.ToString();
 
@@ -103,12 +104,13 @@ namespace Microsoft.SyndicationFeed
             if (rfc822TimeZone[0] == '+' || rfc822TimeZone[0] == '-')
             {
                 // the time zone is supposed to be 4 digits but some feeds omit the initial 0
-                StringBuilder result = new StringBuilder(rfc822TimeZone);
+                StringBuilder result = new(rfc822TimeZone);
                 if (result.Length == 4)
                 {
                     // the timezone is +/-HMM. Convert to +/-HHMM
                     result.Insert(1, '0');
                 }
+
                 result.Insert(3, ':');
                 return result.ToString();
             }
@@ -221,10 +223,13 @@ namespace Microsoft.SyndicationFeed
                         builder.Remove(whiteSpaceStart, index - whiteSpaceStart - 1);
                         index = whiteSpaceStart + 1;
                     }
+
                     whiteSpaceStart = -1;
                 }
+
                 ++index;
             }
+
             // we have already trimmed the start and end so there cannot be a trail of white spaces in the end
             //Fx.Assert(builder.Length == 0 || builder[builder.Length - 1] != ' ', "The string builder doesnt end in a white space");
         }
@@ -233,6 +238,8 @@ namespace Microsoft.SyndicationFeed
         {
             const string Rfc3339LocalDateTimeFormat = "yyyy-MM-ddTHH:mm:sszzz";
             const string Rfc3339UTCDateTimeFormat = "yyyy-MM-ddTHH:mm:ssZ";
+
+            result = default;
 
             dateTimeString = dateTimeString.Trim();
 
@@ -244,25 +251,32 @@ namespace Microsoft.SyndicationFeed
                 {
                     ++i;
                 }
-                dateTimeString = dateTimeString.Substring(0, 19) + dateTimeString.Substring(i);
+
+                dateTimeString = string.Concat(dateTimeString.AsSpan(0, 19), dateTimeString.AsSpan(i));
             }
 
-            DateTimeOffset localTime;
-            if (DateTimeOffset.TryParseExact(dateTimeString, Rfc3339LocalDateTimeFormat,
+            if (DateTimeOffset.TryParseExact(
+                dateTimeString,
+                Rfc3339LocalDateTimeFormat,
                 CultureInfo.InvariantCulture.DateTimeFormat,
-                DateTimeStyles.None, out localTime))
+                DateTimeStyles.None,
+                out DateTimeOffset localTime))
             {
                 result = localTime;
                 return true;
             }
-            DateTimeOffset utcTime;
-            if (DateTimeOffset.TryParseExact(dateTimeString, Rfc3339UTCDateTimeFormat,
+
+            if (DateTimeOffset.TryParseExact(
+                dateTimeString,
+                Rfc3339UTCDateTimeFormat,
                 CultureInfo.InvariantCulture.DateTimeFormat,
-                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out utcTime))
+                DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
+                out DateTimeOffset utcTime))
             {
                 result = utcTime;
                 return true;
             }
+
             return false;
         }
     }
