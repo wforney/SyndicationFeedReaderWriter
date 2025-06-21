@@ -2,14 +2,25 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Microsoft.SyndicationFeed
+namespace Microsoft.SyndicationFeed.Atom;
+
+/// <summary>
+/// Represents an Atom entry in a syndication feed.
+/// </summary>
+public interface IAtomEntry : ISyndicationItem
 {
-    public interface IAtomEntry : ISyndicationItem
-    {
-        string ContentType { get; }
+    /// <summary>
+    /// Gets the content type of the Atom entry.
+    /// </summary>
+    string ContentType { get; }
 
-        string Summary { get; }
+    /// <summary>
+    /// Gets the rights information of the Atom entry, if available.
+    /// </summary>
+    string? Rights { get; }
 
-        string Rights { get; }
-    }
+    /// <summary>
+    /// Gets the summary of the Atom entry.
+    /// </summary>
+    string? Summary { get; }
 }

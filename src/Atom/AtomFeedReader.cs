@@ -2,95 +2,64 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
-using System.Threading.Tasks;
+using Microsoft.SyndicationFeed.Utils;
 using System.Xml;
 
-namespace Microsoft.SyndicationFeed.Atom
+namespace Microsoft.SyndicationFeed.Atom;
+
+/// <summary>
+/// Represents a reader for Atom feeds. Implements the <see cref="XmlFeedReader"/>
+/// </summary>
+/// <seealso cref="XmlFeedReader"/>
+/// <remarks>Initializes a new instance of the <see cref="AtomFeedReader"/> class.</remarks>
+/// <param name="reader">The reader.</param>
+/// <param name="parser">The parser.</param>
+public class AtomFeedReader(XmlReader reader, ISyndicationFeedParser? parser = null) : XmlFeedReader(reader, parser ?? new AtomParser())
 {
-    public class AtomFeedReader : XmlFeedReader
+    private bool _knownFeed;
+
+    /// <inheritdoc/>
+    public override async Task<bool> Read()
     {
-        private readonly XmlReader _reader;
-        private bool _knownFeed;
-
-        public AtomFeedReader(XmlReader reader)
-            : this(reader, new AtomParser())
-        {                
+        if (!_knownFeed)
+        {
+            await InitRead();
+            _knownFeed = true;
         }
 
-        public AtomFeedReader(XmlReader reader, ISyndicationFeedParser parser) 
-            : base(reader, parser)
+        return await base.Read();
+    }
+
+    /// <inheritdoc/>
+    public virtual async Task<IAtomEntry> ReadEntry() => await base.ReadItem() is not IAtomEntry item ? throw new FormatException("Invalid Atom entry") : item;
+
+    /// <inheritdoc/>
+    protected override SyndicationElementType MapElementType(string elementName)
+    {
+        return Reader.NamespaceURI != AtomConstants.Atom10Namespace
+            ? SyndicationElementType.Content
+            : elementName switch
+            {
+                AtomElementNames.Entry => SyndicationElementType.Item,
+                AtomElementNames.Link => SyndicationElementType.Link,
+                AtomElementNames.Category => SyndicationElementType.Category,
+                AtomElementNames.Logo or AtomElementNames.Icon => SyndicationElementType.Image,
+                AtomContributorTypes.Author or AtomContributorTypes.Contributor => SyndicationElementType.Person,
+                _ => SyndicationElementType.Content,
+            };
+    }
+
+    private async Task InitRead()
+    {
+        // Check <feed>
+        if (Reader.IsStartElement(AtomElementNames.Feed, AtomConstants.Atom10Namespace))
         {
-            _reader = reader;
+            // Read <feed>
+            _ = await XmlUtils.ReadAsync(Reader);
         }
-
-        public override async Task<bool> Read()
+        else
         {
-            if (!_knownFeed)
-            {
-                await InitRead();
-                _knownFeed = true;
-            }
-
-            return await base.Read();
-        }
-
-        public virtual async Task<IAtomEntry> ReadEntry()
-        {
-            IAtomEntry item = await base.ReadItem() as IAtomEntry;
-
-            if (item == null)
-            {
-                throw new FormatException("Invalid Atom entry");
-            }
-
-            return item;
-        }
-
-        protected override SyndicationElementType MapElementType(string elementName)
-        {
-            if (_reader.NamespaceURI != AtomConstants.Atom10Namespace)
-            {
-                return SyndicationElementType.Content;
-            }
-
-            switch (elementName)
-            {
-                case AtomElementNames.Entry:
-                    return SyndicationElementType.Item;
-
-                case AtomElementNames.Link:
-                    return SyndicationElementType.Link;
-
-                case AtomElementNames.Category:
-                    return SyndicationElementType.Category;
-
-                case AtomElementNames.Logo:
-                case AtomElementNames.Icon:
-                    return SyndicationElementType.Image;
-
-                case AtomContributorTypes.Author:
-                case AtomContributorTypes.Contributor:
-                    return SyndicationElementType.Person;
-
-                default:
-                    return SyndicationElementType.Content;
-            }
-        }
-
-        private async Task InitRead()
-        {
-            // Check <feed>
-
-            if (_reader.IsStartElement(AtomElementNames.Feed, AtomConstants.Atom10Namespace))
-            {
-                //Read <feed>
-                await XmlUtils.ReadAsync(_reader);
-            }
-            else
-            {
-                throw new XmlException("Unknown Atom Feed");
-            }
+            throw new XmlException("Unknown Atom Feed");
         }
     }
 }

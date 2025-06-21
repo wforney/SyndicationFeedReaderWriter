@@ -2,11 +2,20 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Microsoft.SyndicationFeed.Atom
+namespace Microsoft.SyndicationFeed.Atom;
+
+/// <summary>
+/// Represents the types of images used in Atom feeds.
+/// </summary>
+public static class AtomImageTypes
 {
-    public static class AtomImageTypes
-    {
-        public const string Icon = "icon";
-        public const string Logo = "logo";
-    }
+    /// <summary>
+    /// Represents an icon image type in Atom feeds.
+    /// </summary>
+    public const string Icon = "icon";
+
+    /// <summary>
+    /// Represents a logo image type in Atom feeds.
+    /// </summary>
+    public const string Logo = "logo";
 }

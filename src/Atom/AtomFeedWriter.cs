@@ -2,167 +2,152 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Microsoft.SyndicationFeed.Utils;
 using System.Xml;
 
-namespace Microsoft.SyndicationFeed.Atom
+namespace Microsoft.SyndicationFeed.Atom;
+
+/// <summary>
+/// Represents an Atom feed writer that writes Atom feeds in XML format. Implements the <see cref="XmlFeedWriter"/>
+/// </summary>
+/// <seealso cref="XmlFeedWriter"/>
+public class AtomFeedWriter : XmlFeedWriter
 {
-    public class AtomFeedWriter : XmlFeedWriter
+    private readonly IEnumerable<ISyndicationAttribute> _attributes;
+    private readonly XmlWriter _writer;
+
+    private bool _feedStarted;
+
+    /// <inheritdoc/>
+    public AtomFeedWriter(XmlWriter writer, IEnumerable<ISyndicationAttribute>? attributes = null)
+        : this(writer, attributes, null)
     {
-        private readonly XmlWriter _writer;
-        private readonly IEnumerable<ISyndicationAttribute> _attributes;
-        private bool _feedStarted;
+    }
 
-        public AtomFeedWriter(XmlWriter writer, IEnumerable<ISyndicationAttribute> attributes = null)
-            : this(writer, attributes, null)
+    /// <inheritdoc/>
+    public AtomFeedWriter(XmlWriter writer, IEnumerable<ISyndicationAttribute>? attributes, ISyndicationFeedFormatter? formatter) :
+        this(writer, formatter, EnsureXmlNs(attributes ?? []))
+    {
+    }
+
+    private AtomFeedWriter(XmlWriter writer, ISyndicationFeedFormatter? formatter, IEnumerable<ISyndicationAttribute> attributes) :
+        base(writer, formatter ?? new AtomFormatter(attributes, writer.Settings))
+    {
+        _writer = writer;
+        _attributes = attributes;
+    }
+
+    /// <inheritdoc/>
+    public virtual Task WriteGenerator(string value, string uri, string version)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+
+        var generator = new SyndicationContent(AtomElementNames.Generator, value);
+
+        if (!string.IsNullOrEmpty(uri))
         {
+            generator.AddAttribute(new SyndicationAttribute("uri", uri));
         }
 
-        public AtomFeedWriter(XmlWriter writer, IEnumerable<ISyndicationAttribute> attributes, ISyndicationFeedFormatter formatter) :
-            this(writer, formatter, EnsureXmlNs(attributes ?? Enumerable.Empty<ISyndicationAttribute>()))
+        if (!string.IsNullOrEmpty(version))
         {
+            generator.AddAttribute(new SyndicationAttribute("version", version));
         }
 
-        private AtomFeedWriter(XmlWriter writer, ISyndicationFeedFormatter formatter, IEnumerable<ISyndicationAttribute> attributes) :
-            base(writer, formatter ?? new AtomFormatter(attributes, writer.Settings))
+        return Write(generator);
+    }
+
+    /// <inheritdoc/>
+    public virtual Task WriteId(string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+
+        return WriteValue(AtomElementNames.Id, value);
+    }
+
+    /// <inheritdoc/>
+    public override Task WriteRaw(string content)
+    {
+        if (!_feedStarted)
         {
-            _writer = writer;
-            _attributes = attributes;
+            StartFeed();
         }
 
-        public virtual Task WriteTitle(string value)
+        return XmlUtils.WriteRawAsync(_writer, content);
+    }
+
+    /// <inheritdoc/>
+    public virtual Task WriteRights(string value) => WriteText(AtomElementNames.Rights, value, null);
+
+    /// <inheritdoc/>
+    public virtual Task WriteSubtitle(string value) => WriteText(AtomElementNames.Subtitle, value, null);
+
+    /// <inheritdoc/>
+    public virtual Task WriteText(string name, string value, string? type)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(name);
+        ArgumentNullException.ThrowIfNull(value);
+
+        var content = new SyndicationContent(name, value);
+
+        if (!string.IsNullOrEmpty(type))
         {
-            return WriteText(AtomElementNames.Title, value, null);
+            content.AddAttribute(new SyndicationAttribute(AtomConstants.Type, type));
         }
 
-        public virtual Task WriteSubtitle(string value)
+        return Write(content);
+    }
+
+    /// <inheritdoc/>
+    public virtual Task WriteTitle(string value) => WriteText(AtomElementNames.Title, value, null);
+
+    /// <inheritdoc/>
+    public virtual Task WriteUpdated(DateTimeOffset dt)
+    {
+        return dt == default
+            ? throw new ArgumentException("DateTimeOffset cannot be default.", nameof(dt))
+            : WriteValue(AtomElementNames.Updated, dt);
+    }
+
+    private static IEnumerable<ISyndicationAttribute> EnsureXmlNs(IEnumerable<ISyndicationAttribute> attributes)
+    {
+        ISyndicationAttribute? xmlnsAttr = attributes.FirstOrDefault(a => a.Name.StartsWith("xmlns") && a.Value == AtomConstants.Atom10Namespace);
+
+        // Insert Atom namespace if it doesn't already exist
+        if (xmlnsAttr is null)
         {
-            return WriteText(AtomElementNames.Subtitle, value, null);
+            var list = new List<ISyndicationAttribute>(attributes);
+            list.Insert(0, new SyndicationAttribute("xmlns", AtomConstants.Atom10Namespace));
+
+            attributes = list;
         }
 
-        public virtual Task WriteId(string value)
-        {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
+        return attributes;
+    }
 
-            return WriteValue(AtomElementNames.Id, value);
+    private void StartFeed()
+    {
+        ISyndicationAttribute? xmlns = _attributes.FirstOrDefault(a => a.Name == "xmlns");
+
+        // Write <feed>
+        if (xmlns is null)
+        {
+            _writer.WriteStartElement(AtomElementNames.Feed);
+        }
+        else
+        {
+            _writer.WriteStartElement(AtomElementNames.Feed, xmlns.Value);
         }
 
-        public virtual Task WriteUpdated(DateTimeOffset dt)
+        // Add attributes
+        foreach (ISyndicationAttribute a in _attributes)
         {
-            if (dt == default(DateTimeOffset))
+            if (a != xmlns)
             {
-                throw new ArgumentException(nameof(dt));
+                _writer.WriteSyndicationAttribute(a);
             }
-
-            return WriteValue(AtomElementNames.Updated, dt);
         }
 
-        public virtual Task WriteRights(string value)
-        {
-            return WriteText(AtomElementNames.Rights, value, null);
-        }
-
-        public virtual Task WriteGenerator(string value, string uri, string version)
-        {
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
-            var generator = new SyndicationContent(AtomElementNames.Generator, value);
-
-            if (!string.IsNullOrEmpty(uri))
-            {
-                generator.AddAttribute(new SyndicationAttribute("uri", uri));
-            }
-
-            if (!string.IsNullOrEmpty(version))
-            {
-                generator.AddAttribute(new SyndicationAttribute("version", version));
-            }
-
-            return Write(generator);
-        }
-
-        public virtual Task WriteText(string name, string value, string type)
-        {
-            if (string.IsNullOrEmpty(name))
-            {
-                throw new ArgumentNullException(nameof(name));
-            }
-
-            if (value == null)
-            {
-                throw new ArgumentNullException(nameof(value));
-            }
-
-            var content = new SyndicationContent(name, value);
-
-            if (!string.IsNullOrEmpty(type))
-            {
-                content.AddAttribute(new SyndicationAttribute(AtomConstants.Type, type));
-            }
-
-            return Write(content);
-        }
-
-        public override Task WriteRaw(string content)
-        {
-            if (!_feedStarted)
-            {
-                StartFeed();
-            }
-
-            return XmlUtils.WriteRawAsync(_writer, content);
-        }
-
-        private void StartFeed()
-        {
-            ISyndicationAttribute xmlns = _attributes.FirstOrDefault(a => a.Name == "xmlns");
-
-            // Write <feed>
-            if (xmlns != null)
-            {
-                _writer.WriteStartElement(AtomElementNames.Feed, xmlns.Value);
-            }
-            else
-            {
-                _writer.WriteStartElement(AtomElementNames.Feed);
-            }
-
-            // Add attributes
-            foreach (var a in _attributes)
-            {
-                if (a != xmlns)
-                {
-                    _writer.WriteSyndicationAttribute(a);
-                }
-            }
-
-            _feedStarted = true;
-        }
-
-        private static IEnumerable<ISyndicationAttribute> EnsureXmlNs(IEnumerable<ISyndicationAttribute> attributes)
-        {
-            ISyndicationAttribute xmlnsAttr = attributes.FirstOrDefault(a => a.Name.StartsWith("xmlns") && a.Value == AtomConstants.Atom10Namespace);
-
-            //
-            // Insert Atom namespace if it doesn't already exist
-            if (xmlnsAttr == null)
-            {
-                var list = new List<ISyndicationAttribute>(attributes);
-                list.Insert(0, new SyndicationAttribute("xmlns", AtomConstants.Atom10Namespace));
-
-                attributes = list;
-            }
-
-            return attributes;
-        }
+        _feedStarted = true;
     }
 }
