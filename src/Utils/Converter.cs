@@ -2,12 +2,12 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-namespace Microsoft.SyndicationFeed;
+namespace Microsoft.SyndicationFeed.Utils;
 
 /// <summary>
 /// Provides methods to convert strings to various types.
 /// </summary>
-static class Converter
+internal static class Converter
 {
     /// <summary>
     /// Tries the parse value.
@@ -22,7 +22,6 @@ static class Converter
 
         Type type = typeof(T);
 
-        //
         // String
         if (type == typeof(string))
         {
@@ -35,7 +34,6 @@ static class Converter
             return false;
         }
 
-        //
         // DateTimeOffset
         if (type == typeof(DateTimeOffset))
         {
@@ -48,20 +46,18 @@ static class Converter
             return false;
         }
 
-        //
         // DateTime
         if (type == typeof(DateTime))
         {
             if (DateTimeUtils.TryParseDate(value, out DateTimeOffset dt))
             {
-                result = (T)(object) dt.DateTime;
+                result = (T)(object)dt.DateTime;
                 return true;
             }
 
             return false;
         }
 
-        //
         // Enum
         if (type.IsEnum)
         {
@@ -72,7 +68,6 @@ static class Converter
             }
         }
 
-        //
         // Uri
         if (type == typeof(Uri))
         {
@@ -85,7 +80,6 @@ static class Converter
             return false;
         }
 
-        //
         // Fall back default
         return (result = (T)Convert.ChangeType(value, typeof(T))) is not null;
     }
