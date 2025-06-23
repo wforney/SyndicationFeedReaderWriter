@@ -4,6 +4,12 @@
 
 namespace Microsoft.SyndicationFeed;
 
+/// <summary>
+/// Represents a category in a syndication feed, which is used to classify or group entries. This
+/// class cannot be inherited. Implements the <see cref="ISyndicationCategory"/>
+/// </summary>
+/// <param name="name">The name.</param>
+/// <seealso cref="ISyndicationCategory"/>
 public sealed class SyndicationCategory(string name) : ISyndicationCategory
 {
     /// <inheritdoc/>

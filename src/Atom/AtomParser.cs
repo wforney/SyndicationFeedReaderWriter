@@ -359,7 +359,7 @@ public class AtomParser : ISyndicationFeedParser
         {
             while (reader.MoveToNextAttribute())
             {
-                ISyndicationAttribute attr = reader.ReadSyndicationAttribute();
+                ISyndicationAttribute? attr = reader.ReadSyndicationAttribute();
 
                 if (attr is not null)
                 {

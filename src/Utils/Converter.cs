@@ -71,7 +71,7 @@ internal static class Converter
         // Uri
         if (type == typeof(Uri))
         {
-            if (UriUtils.TryParse(value, out Uri uri))
+            if (UriUtils.TryParse(value, out Uri? uri))
             {
                 result = (T)(object)uri;
                 return true;
