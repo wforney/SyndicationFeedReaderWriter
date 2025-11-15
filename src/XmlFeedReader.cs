@@ -150,7 +150,7 @@ public abstract class XmlFeedReader(XmlReader reader, ISyndicationFeedParser par
     {
         ISyndicationContent content = await ReadContent();
 
-        return !Parser.TryParseValue(content.Value, out T value) ? throw new FormatException() : value;
+        return Parser.TryParseValue(content.Value, out T? value) ? value : throw new FormatException();
     }
 
     /// <inheritdoc/>

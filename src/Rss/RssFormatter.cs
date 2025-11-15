@@ -284,6 +284,7 @@ public class RssFormatter : ISyndicationFeedFormatter
 
     private SyndicationContent CreateCommentsContent(ISyndicationLink link)
     {
+        ArgumentNullException.ThrowIfNull(link?.RelationshipType);
         return new SyndicationContent(link.RelationshipType)
         {
             Value = FormatValue(link.Uri)
@@ -366,6 +367,7 @@ public class RssFormatter : ISyndicationFeedFormatter
 
     private SyndicationContent CreateSourceContent(ISyndicationLink link)
     {
+        ArgumentNullException.ThrowIfNull(link?.RelationshipType);
         var content = new SyndicationContent(link.RelationshipType);
 
         // Url

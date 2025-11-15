@@ -22,17 +22,17 @@ public interface ISyndicationLink
     /// <summary>
     /// Gets the media type of the syndication link.
     /// </summary>
-    string MediaType { get; }
+    string? MediaType { get; }
 
     /// <summary>
     /// Gets the relationship type of the syndication link.
     /// </summary>
-    string RelationshipType { get; }
+    string? RelationshipType { get; }
 
     /// <summary>
     /// Gets the title of the syndication link.
     /// </summary>
-    string Title { get; }
+    string? Title { get; }
 
     /// <summary>
     /// Gets the URI of the syndication link.
